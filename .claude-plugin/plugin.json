@@ -24,6 +24,5 @@
     "./agents/test-writer.md",
     "./agents/security-auditor.md",
     "./agents/e2e-tester.md"
-  ],
-  "hooks": "./hooks/hooks.json"
+  ]
 }
