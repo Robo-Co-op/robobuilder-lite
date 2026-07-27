@@ -36,12 +36,19 @@ feature.
 ## Install
 
 ```sh
-/plugin marketplace add Robo-Co-op/robobuilder-lite
+/plugin marketplace add Robo-Co-op/robobuilder-standard
 /plugin install robobuilder-lite@robo-coop-tools
 /reload-plugins
 ```
 
-See `docs/INSTALL.md`. When you outgrow the four commands, install
+The marketplace catalog (`robo-coop-tools`) lives in the Standard repo and lists all
+three editions — that's why the `marketplace add` line points there even when you
+only want Lite. Adding `Robo-Co-op/robobuilder-lite` as a marketplace does not work.
+
+`/plugin` is terminal-CLI only. In the Claude desktop app use its plugin browser, and
+for web sessions declare the plugin in `.claude/settings.json` — see `docs/INSTALL.md`.
+
+When you outgrow the four commands, install
 [Robo Builder Standard](https://github.com/Robo-Co-op/robobuilder-standard) for the
 full 41-skill set — the commands don't collide, so you can run both.
 
