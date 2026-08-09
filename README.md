@@ -12,7 +12,7 @@ graduate from into the full Standard edition when you want the finer-grained too
 |---|---|---|
 | **Lite** (this repo) | [robobuilder-lite](https://github.com/Robo-Co-op/robobuilder-lite) | Beginners — learn the workflow with 4 commands |
 | **Standard** | [robobuilder-standard](https://github.com/Robo-Co-op/robobuilder-standard) | Daily development — 41 skills / 9 agents / 6 hooks |
-| **Pro** | [robobuilder-pro](https://github.com/Robo-Co-op/robobuilder-pro) | Loop Engineering — autonomous agent loops (add-on to Standard) |
+| **Pro** | [robobuilder-pro](https://github.com/Robo-Co-op/robobuilder-pro) | Loop & Graph Engineering — autonomous agent loops, and the graph that keeps them honest (add-on to Standard) |
 
 ## The four commands
 
@@ -51,6 +51,12 @@ for web sessions declare the plugin in `.claude/settings.json` — see `docs/INS
 When you outgrow the four commands, install
 [Robo Builder Standard](https://github.com/Robo-Co-op/robobuilder-standard) for the
 full 41-skill set — the commands don't collide, so you can run both.
+
+These four don't get retired later, either. [Robo Builder
+Pro](https://github.com/Robo-Co-op/robobuilder-pro)'s `dev-loop` runs *this* cycle —
+`plan → build → improve → ship` — as the inner loop of an autonomous one, so Lite stays
+the engine rather than becoming a stepping stone. Pro requires Lite installed alongside
+it for that reason.
 
 ## Attribution
 
