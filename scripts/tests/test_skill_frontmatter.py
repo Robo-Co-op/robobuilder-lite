@@ -69,3 +69,27 @@ def test_has_pedagogical_sections(skill: str) -> None:
     text = (SKILLS_DIR / skill / "SKILL.md").read_text(encoding="utf-8")
     for section in ("## What", "## When", "## Why", "## How", "## Anti-pattern", "## See Also"):
         assert section in text, f"{skill}: missing section {section}"
+
+
+def test_merged_from_matches_readme_table() -> None:
+    """Each skill's `merged-from` provenance must match README's command table.
+
+    The table is the surface a user reads to decide which command to reach for,
+    so a bundle that moves in the frontmatter but not the table sends people to
+    the wrong command. This drift shipped repeatedly in the sibling Pro repo
+    before it was guarded.
+    """
+    readme = (SKILLS_DIR.parent / "README.md").read_text(encoding="utf-8")
+    for skill in ("plan", "build", "improve", "ship"):
+        fm = _frontmatter((SKILLS_DIR / skill / "SKILL.md").read_text(encoding="utf-8"))
+        m = re.search(r"merged-from:\s*(.+)", fm)
+        assert m, f"{skill}: missing merged-from"
+        declared = [x.strip() for x in m.group(1).split(",")]
+        row = re.search(
+            rf"\|\s*`/robobuilder-lite:{skill}`.*?\|.*?\|\s*(.+?)\s*\|", readme
+        )
+        assert row, f"README has no command-table row for {skill}"
+        listed = [x.strip() for x in row.group(1).split(",")]
+        assert declared == listed, (
+            f"{skill}: merged-from {declared} but README's table says {listed}"
+        )

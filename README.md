@@ -18,13 +18,16 @@ graduate from into the full Standard edition when you want the finer-grained too
 
 | Command | Does | Bundles (from Standard) |
 |---|---|---|
-| `/robobuilder-lite:plan` | Idea → grilled design → PRD → vertical-slice issues | grill-me, to-prd, to-issues |
-| `/robobuilder-lite:build` | Pick an issue → red-green-refactor; bug branch + `--health` | triage, tdd, diagnose, health |
+| `/robobuilder-lite:plan` | New feature: idea → grilled design → PRD. Existing code: map → `--health` measure. Both → issues | grill-me, to-prd, to-issues, zoom-out, health |
+| `/robobuilder-lite:build` | Pick an issue → red-green-refactor; bug branch when something breaks | triage, tdd, diagnose |
 | `/robobuilder-lite:improve` | Review before merge; `--deep` / `--security` / `--refactor` | diff-review, cross-review, grill, cso, improve-codebase-architecture, request-refactor-plan |
 | `/robobuilder-lite:ship` | Green tests → PR → merge → CI → deploy verify | ship, land-and-deploy |
 
 The typical loop: **plan → build → improve → ship**, then back to plan for the next
-feature.
+piece of work — and it's the same four either way. A new feature enters plan as an
+idea and gets grilled; existing code enters plan as a codebase and gets mapped and
+measured. Both leave plan as issues, so build onward doesn't care which you started
+with.
 
 ## What ships with it
 

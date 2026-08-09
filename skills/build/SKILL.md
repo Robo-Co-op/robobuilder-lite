@@ -1,9 +1,9 @@
 ---
 name: build
-description: "[Lite-2 Build] Pick the next ready issue and implement it with the red-green-refactor loop; branches into diagnosis when something breaks and a quality dashboard on --health. Use when implementing an issue, doing TDD, debugging, or checking codebase health."
+description: "[Lite-2 Build] Pick the next ready issue and implement it with the red-green-refactor loop; branches into diagnosis when something breaks. Use when implementing an issue, doing TDD, or debugging."
 origin: robobuilder-lite
 upstream: https://github.com/Robo-Co-op/robobuilder-standard
-merged-from: triage, tdd, diagnose, health
+merged-from: triage, tdd, diagnose
 ---
 
 # Build
@@ -11,11 +11,10 @@ merged-from: triage, tdd, diagnose, health
 ## What
 
 The implementation command. It picks the next ready issue and drives it through a
-disciplined test-first loop. Two branches fold in for the moments you actually hit:
-a **bug branch** (a diagnosis loop) when something breaks, and a **`--health`
-mode** that runs a quality dashboard.
+disciplined test-first loop, with a **bug branch** — a diagnosis loop — for when
+something breaks mid-implementation.
 
-This is the Lite bundle of `triage`, `tdd`, `diagnose`, and `health` from Standard.
+This is the Lite bundle of `triage`, `tdd`, and `diagnose` from Standard.
 
 ## When
 
@@ -23,7 +22,9 @@ Use `/robobuilder-lite:build` when:
 - You have a ready issue and want to implement it properly
 - You're doing test-driven development
 - Something is broken and you need to debug it methodically → the bug branch
-- You want a snapshot of code quality → `/robobuilder-lite:build --health`
+
+Deciding *what* to work on — including what's worth fixing in an existing codebase —
+is `/robobuilder-lite:plan`'s job, not this one.
 
 ## Why
 
@@ -116,26 +117,15 @@ Don't guess. Build a feedback loop first.
 6. **Cleanup.** Original repro gone, all `[DEBUG-...]` logs removed, the correct
    hypothesis written in the commit message so the next debugger learns.
 
-### `--health` mode — quality dashboard
+### `--health` — moved to `plan`
 
-Run the project's own quality tools and score them. Read-only; never fix anything
-here.
+`build --health` still works and forwards, but the dashboard now lives in
+`/robobuilder-lite:plan --health`. It moved because measuring a codebase answers
+"what should I work on", which is plan's question — and because the ranked findings
+need plan's Stage 1 map to be ordered by anything better than irritation. Running it
+here left build handing its own output straight to another command.
 
-1. **Detect the stack.** Read a `## Health Stack` section in CLAUDE.md if present;
-   otherwise auto-detect type checker, linter, test runner, dead-code detector, and
-   shell linter. Offer to persist the detected stack to CLAUDE.md.
-2. **Run each tool** sequentially, capturing exit code, duration, and the last ~50
-   lines of output. A missing tool is `SKIPPED`, not a failure.
-3. **Score** each category 0–10 and compute a weighted composite
-   (tests 28%, type check 22%, lint 18%, dead code 13%, shell 9%; redistribute a
-   skipped tool's weight). Present a dashboard table with a composite score and,
-   for anything below 7, the actual tool output so the user can act.
-4. **Recommend** fixes ranked by `weight × (10 − score)`.
-
-Wrap, don't replace: report exactly what the tools say. Be honest — 100 type errors
-with passing tests is not a healthy codebase.
-
-**Next:** run `/robobuilder-lite:improve` before you merge.
+Tell the user where it went, then run `/robobuilder-lite:plan --health`.
 
 ## Example
 
@@ -159,12 +149,15 @@ with passing tests is not a healthy codebase.
   first; the bug is then 90% found.
 - **Testing private methods / mocking internal collaborators.** The test breaks on
   every refactor and tells you nothing about behavior.
-- **Fixing issues in `--health` mode.** It's a read-only dashboard. Fix separately.
+- **Picking your own work.** Build implements a *ready issue*. If you're choosing what
+  to do next, or measuring the codebase to decide, that's `plan`.
 
 ## See Also
 
-- `/robobuilder-lite:plan` — produce the issues this skill picks up
+- `/robobuilder-lite:plan` — produce the issues this skill picks up, and where
+  `--health` now lives
 - `/robobuilder-lite:improve` — review the diff before merging
 - `/robobuilder-lite:ship` — package and land the change
-- For the unbundled originals (`triage`, `tdd`, `diagnose`, `health`, plus
-  `zoom-out`, `caveman`, `browse`), see **Robo Builder Standard**.
+- For the unbundled originals (`triage`, `tdd`, `diagnose`, plus `caveman` and
+  `browse`), see **Robo Builder Standard**. `health` and `zoom-out` are bundled into
+  `plan`.
