@@ -140,9 +140,11 @@ here — findings become issues in Stage 3.
    weights sum to 90, so summing them directly caps a perfect codebase at 9.0 and
    leaves "redistribute" ambiguous. Present a dashboard table with the composite
    and, for anything below 7, the actual tool output so the user can act.
-4. **Rank** the findings by `weight × (10 − score)`, and place each on the Stage 1
-   map — a failure in a module nothing calls is not the same problem as the same
-   failure under everything.
+4. **Rank** the findings by `weight × (10 − score)`, and place each against the map
+   — a failure in a module nothing calls is not the same problem as the same failure
+   under everything. If Stage 1 skipped the map because the user knows the area, the
+   map is in their head: show them the top findings and ask where each sits. Ranking
+   by score alone is ranking by irritation.
 
 Wrap, don't replace: report exactly what the tools say. Be honest — 100 type errors
 with passing tests is not a healthy codebase.
@@ -195,11 +197,16 @@ End-to-end behavior of this slice (not layer-by-layer). No file paths.
 
 ## Example
 
-> **User:** I want to add saved searches to the app.
+> **User:** I want to add saved searches to this app. I didn't write any of it.
 >
-> **plan (Grill):** One at a time — Should a saved search capture the query only,
-> or also the sort and filters? My recommendation: query + filters + sort, because
-> users expect the exact view back… *(continues until every branch is decided)*
+> **plan (Map):** Search today is `SearchBar` → `QueryBuilder` → `results/`, and
+> `QueryBuilder` already serialises a query + filters + sort for the URL. Nothing
+> persists it. *(map of modules + callers)*
+>
+> **plan (Grill):** One at a time — the map says `QueryBuilder` already serialises
+> query + filters + sort. Should a saved search reuse that shape, or capture its own?
+> My recommendation: reuse it, because a second shape means two things to keep in
+> sync… *(continues until every branch is decided)*
 >
 > **plan (PRD):** Modules: `SavedSearch` (deep — stores + replays a view),
 > `SearchBar` integration. User stories: 1. As a user, I want to save my current
