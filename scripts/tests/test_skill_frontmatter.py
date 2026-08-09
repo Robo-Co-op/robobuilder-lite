@@ -165,3 +165,24 @@ def test_scoring_skill_states_its_missing_input_rule(skill: str) -> None:
         f"{skill} produces a composite but never says what happens to a tool that "
         "did not run. A SKIPPED tool must drop out, not score 0 or 10."
     )
+
+
+def test_plugin_json_version_matches_changelog_latest() -> None:
+    """A behavior change shipped under an unchanged version is invisible.
+
+    This repo did exactly that: `plan` grew from 105 to 240 lines and `health`
+    moved out of `build`, while plugin.json stayed at 1.0.0 with no CHANGELOG
+    entry. Pro has carried this guard for a while and was the only one of the
+    three repos whose version was right, which is the whole argument for it.
+    """
+    import json
+
+    root = SKILLS_DIR.parent
+    manifest = json.loads((root / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
+    m = re.search(r"^##\s*\[(\d+\.\d+\.\d+)\]", changelog, re.MULTILINE)
+    assert m, "could not find a version heading in CHANGELOG.md"
+    assert manifest["version"] == m.group(1), (
+        f"plugin.json version {manifest['version']!r} does not match "
+        f"CHANGELOG's latest entry {m.group(1)!r}"
+    )

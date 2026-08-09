@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "robobuilder-lite",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Robo Builder Lite edition — the beginner on-ramp: 4 merged mega-skills (plan / build / improve / ship) covering the full dev workflow, with the same safety hooks and review agents as Standard.",
   "author": {
     "name": "Robo Co-op",
@@ -10,7 +10,12 @@
   "homepage": "https://www.notion.so/Claude-34e5a7e135d2807daec1d83e41d93504",
   "repository": "https://github.com/Robo-Co-op/robobuilder-lite",
   "license": "MIT",
-  "keywords": ["robo-co-op", "workflow", "beginners", "tdd"],
+  "keywords": [
+    "robo-co-op",
+    "workflow",
+    "beginners",
+    "tdd"
+  ],
   "skills": [
     "./skills/plan/",
     "./skills/build/",
