@@ -15,7 +15,7 @@ The release command. It carries a reviewed change from green tests all the way t
 verified deploy in one flow:
 
 1. **Pre-flight** — branch check, merge the base, run the full test suite
-2. **Package** — bump VERSION, update CHANGELOG, commit, push, open a PR
+2. **Package** — bump the version, update CHANGELOG, commit, push, open a PR
 3. **Land** — pre-merge readiness gate, merge, wait for CI until green
 4. **Verify** — detect the deploy, check production health / canary
 
@@ -46,7 +46,7 @@ already succeeded.
 2. **Abort if on the base branch** — ship from a feature branch.
 3. **Merge the base first** (`git fetch` + `git merge origin/<base> --no-edit`) so
    tests run against the merged state. Stop on complex conflicts; auto-resolve
-   trivial ones (VERSION, CHANGELOG ordering).
+   trivial ones (the version file, CHANGELOG ordering).
 4. **Run the full test suite.** If a test fails, classify it: an **in-branch**
    failure stops ship (it's yours to fix); a clearly **pre-existing** failure is
    triaged (fix now / TODO / skip), not auto-blocking. When ambiguous, treat it as
@@ -54,7 +54,14 @@ already succeeded.
 
 ### Stage 2 — Package
 
-1. **Bump VERSION** — auto-pick PATCH/MICRO; **ask only on a MAJOR** bump.
+1. **Bump the version** — auto-pick PATCH/MICRO; **ask only on a MAJOR** bump.
+   Find where the version lives before assuming a `VERSION` file: check `VERSION`,
+   then `.claude-plugin/plugin.json`, `package.json`, `pyproject.toml`, `Cargo.toml`,
+   in that order, and take the first that exists. A repo can keep it somewhere else
+   again tomorrow — detect, don't hardcode. (All three robobuilder repos keep theirs
+   in `plugin.json` and have no `VERSION` file at all, so a hardcoded filename stalls
+   this stage on the very repos this skill ships in.) If a repo has no version
+   anywhere, say so and skip the bump rather than inventing a file.
 2. **Update CHANGELOG** — auto-generate the entry from the diff.
 3. **Commit** — include uncommitted changes; write a clear message (imperative,
    Japanese verb-first per house style if the repo uses it).
@@ -95,7 +102,7 @@ already succeeded.
 ### Re-run behavior (idempotent)
 
 Re-running ship re-runs every **verification** step (tests, readiness, CI, health)
-but skips completed **actions**: if VERSION is already bumped, skip the bump; if
+but skips completed **actions**: if the version is already bumped, skip the bump; if
 already pushed, skip the push; if the PR exists, update its body instead of creating
 a new one; if already merged, skip the merge and go to verify.
 
@@ -108,7 +115,8 @@ accumulates.**
 >
 > **ship (Pre-flight):** on `feat/saved-search`. Merged `origin/main`, no conflicts.
 > Tests: 47/47 pass.
-> **ship (Package):** VERSION 1.3.1 → 1.3.2 (PATCH, auto). CHANGELOG updated.
+> **ship (Package):** version 1.3.1 → 1.3.2 (PATCH, auto — found in `plugin.json`, no
+> `VERSION` file in this repo). CHANGELOG updated.
 > Committed, pushed, PR #212 opened.
 > **ship (Land):** readiness gate clear (improve ran). Merged #212. CI… green.
 > **ship (Verify):** Vercel deploy live. Health check: 200, no console errors. Done.

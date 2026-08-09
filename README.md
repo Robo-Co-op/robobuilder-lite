@@ -12,19 +12,22 @@ graduate from into the full Standard edition when you want the finer-grained too
 |---|---|---|
 | **Lite** (this repo) | [robobuilder-lite](https://github.com/Robo-Co-op/robobuilder-lite) | Beginners — learn the workflow with 4 commands |
 | **Standard** | [robobuilder-standard](https://github.com/Robo-Co-op/robobuilder-standard) | Daily development — 41 skills / 9 agents / 6 hooks |
-| **Pro** | [robobuilder-pro](https://github.com/Robo-Co-op/robobuilder-pro) | Loop Engineering — autonomous agent loops (add-on to Standard) |
+| **Pro** | [robobuilder-pro](https://github.com/Robo-Co-op/robobuilder-pro) | Loop & Graph Engineering — autonomous agent loops, and the graph that keeps them honest (add-on to Standard) |
 
 ## The four commands
 
 | Command | Does | Bundles (from Standard) |
 |---|---|---|
-| `/robobuilder-lite:plan` | Idea → grilled design → PRD → vertical-slice issues | grill-me, to-prd, to-issues |
-| `/robobuilder-lite:build` | Pick an issue → red-green-refactor; bug branch + `--health` | triage, tdd, diagnose, health |
+| `/robobuilder-lite:plan` | Orient (map unfamiliar code, grill open decisions) → write it down (PRD, or `--health` dashboard) → issues | grill-me, to-prd, to-issues, zoom-out, health |
+| `/robobuilder-lite:build` | Pick an issue → red-green-refactor; bug branch when something breaks | triage, tdd, diagnose |
 | `/robobuilder-lite:improve` | Review before merge; `--deep` / `--security` / `--refactor` | diff-review, cross-review, grill, cso, improve-codebase-architecture, request-refactor-plan |
 | `/robobuilder-lite:ship` | Green tests → PR → merge → CI → deploy verify | ship, land-and-deploy |
 
 The typical loop: **plan → build → improve → ship**, then back to plan for the next
-feature.
+piece of work — and it's the same four either way. A new feature enters plan as an
+idea and gets grilled; existing code enters plan as a codebase and gets mapped and
+measured. Both leave plan as issues, so build onward doesn't care which you started
+with.
 
 ## What ships with it
 
@@ -51,6 +54,12 @@ for web sessions declare the plugin in `.claude/settings.json` — see `docs/INS
 When you outgrow the four commands, install
 [Robo Builder Standard](https://github.com/Robo-Co-op/robobuilder-standard) for the
 full 41-skill set — the commands don't collide, so you can run both.
+
+These four don't get retired later, either. [Robo Builder
+Pro](https://github.com/Robo-Co-op/robobuilder-pro)'s `dev-loop` runs *this* cycle —
+`plan → build → improve → ship` — as the inner loop of an autonomous one, so Lite stays
+the engine rather than becoming a stepping stone. Pro requires Lite installed alongside
+it for that reason.
 
 ## Attribution
 

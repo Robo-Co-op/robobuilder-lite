@@ -2,6 +2,47 @@
 
 All notable changes to robobuilder-lite.
 
+## [1.1.0] — 2026-08-09
+
+The four commands now serve existing code as well as new features. `plan` was
+greenfield-only by construction, so the skills answering "what should I work on and
+why" had been pushed into `build` — which is why `build` carried four bundled skills
+to `plan`'s three, and why `build --health` ended its own section by telling you to
+run a different command.
+
+### Changed
+- `plan` runs three stages from either starting point: **orient** (map an unfamiliar
+  area, grill an open design decision — the two compose, they are not a fork),
+  **write it down** (PRD, or a health dashboard), **slice** (issues, shared). Bundles
+  `zoom-out` and `health` in addition to `grill-me` / `to-prd` / `to-issues`
+- Stage 3 slices a PRD vertically but health findings by **blast radius** — "fix 100
+  type errors" cuts through no layers
+- `build` keeps `diagnose`, which its own `## Why` names as load-bearing, and loses
+  `health`, which serves neither of its failure modes. `build --health` still works as
+  a forwarding alias to `plan --health`
+- `build`'s bug branch moved above the TDD loop, so reading top to bottom no longer
+  implies you diagnose after writing tests
+
+### Fixed
+- `plan --health`'s composite could not reach 10: the five weights sum to 0.90, so
+  dividing by the raw total capped a clean repo at 9.0, and the skip rule never said
+  what a `SKIPPED` tool redistributes into. Now `Σ(score × weight) ÷ Σ(weight of the
+  categories that ran)`
+- `ship` assumed a `VERSION` file this repo does not have, so it could not ship the
+  repo it lives in. Stage 2.1 now detects where the version lives
+- `improve` had no answer for a subagent that returns a progress note instead of a
+  report, and no step telling you to check a finding before acting on it
+- `improve --deep` inherited two stopping rules from `cross-review` that this
+  project's own review history disproves: a 5-round cap that would have shipped four
+  real defects found in rounds 6-9, and a "same finding 3+ rounds = false positive"
+  heuristic that would have dismissed six consecutive genuine findings
+
+### Added
+- Tests: `merged-from` must match README's command table, and any skill that
+  aggregates per-item measurements must state what it divides by and what happens to
+  an input it could not measure
+- CI: the suite runs on push and pull request instead of only by hand
+
 ## [1.0.0] — 2026-07-03
 
 First release. The beginner edition of Robo Builder.
