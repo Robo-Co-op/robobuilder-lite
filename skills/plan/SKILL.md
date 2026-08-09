@@ -1,6 +1,6 @@
 ---
 name: plan
-description: "[Lite-1 Plan] Get from a starting point to a set of ready-to-build issues, whether that start is a new idea or a codebase you have to work on. New feature: grill the design, write a PRD, slice it vertically. Existing code: map the area, measure its health, slice by blast radius. Both end in issues small enough to pick up one at a time. Use when starting a feature, turning an idea into a spec, picking up unfamiliar code, or deciding what to fix next."
+description: "[Lite-1 Plan] Get from a starting point to a set of ready-to-build issues, whether that start is a new idea, a codebase you have to work on, or both. Orient by mapping unfamiliar code and grilling any open design decision, write it down as a PRD or a health dashboard, then slice into issues small enough to pick up one at a time. Use when starting a feature, turning an idea into a spec, picking up unfamiliar code, or deciding what to fix next."
 origin: robobuilder-lite
 upstream: https://github.com/Robo-Co-op/robobuilder-standard
 merged-from: grill-me, to-prd, to-issues, zoom-out, health
@@ -10,17 +10,19 @@ merged-from: grill-me, to-prd, to-issues, zoom-out, health
 
 ## What
 
-One command that carries you from a starting point to a set of ready-to-build issues.
-There are two starting points, and they run the same three stages:
+One command that carries you from a starting point to a set of ready-to-build issues,
+in three stages:
 
-| Stage | New feature | Existing code |
+| Stage | | |
 |---|---|---|
-| 1. **Orient** | **Grill** — interview you until the design is decided | **Map** — the modules and callers of the area you're touching |
-| 2. **Write it down** | **PRD** — the shared understanding as a doc | **Health** — a scored dashboard and ranked findings |
+| 1. **Orient** | **Map** the area if it's unfamiliar | **Grill** the design if there's a decision to make |
+| 2. **Write it down** | **PRD** for a new feature | **Health dashboard** for existing code |
 | 3. **Slice** | Issues | Issues |
 
-Stage 3 is shared: both paths end in the same tracker, in the same shape, ready for
-`build` to pick up.
+Stage 1's two moves **compose** — a new feature in code you don't know wants both, and
+that's the common case. Stage 2 is where the paths actually differ, because a design
+and a measurement are different artifacts. Stage 3 is shared: everything ends in the
+same tracker, in the same shape, ready for `build` to pick up.
 
 This is the Lite bundle of five Standard skills (`grill-me`, `to-prd`, `to-issues`,
 `zoom-out`, `health`). It keeps the discipline and drops the ceremony.
@@ -58,12 +60,28 @@ early on the second. Either way you end up with issues someone can actually pick
 
 ### Stage 1 — Orient
 
-Route on the starting point, and say which path you took. If the user came with an
-idea, grill. If they came with code — a bug, a cleanup, an unfamiliar area, or
-`--health` — map first. **Never start mapping because the codebase is nearby**: a
-user who came to design a feature should be grilled, not handed an architecture tour.
+Two moves, and they compose — this is not a fork. **Map** when the area is unfamiliar;
+**grill** when there is a design decision to make. The common case is a new feature in
+code you don't know, which wants both, in that order: you cannot grill well on "should
+this reuse the existing search module?" until you know whether one exists.
 
-**New feature → Grill** *(skip if the design is already settled)*
+Skip either when it has no work to do — the map when the user already knows the area,
+the grill when the design is settled or there is no design to make (a `--health` pass
+has nothing to interrogate). Say which moves you ran and why.
+
+**Map** *(skip if the user knows the area)*
+
+Go up a layer of abstraction before touching anything. Give the user a map of the
+relevant modules and their callers, in the project's own vocabulary (domain glossary
+/ ubiquitous language) if it has one — plain module names if it doesn't.
+
+You are answering "what is this area, and what depends on it", not "what's wrong with
+it". Measurement is Stage 2, and a finding you can't place on this map is a finding
+you can't prioritize.
+
+**DONE when:** the user can point at the part of the map they care about.
+
+**Grill** *(skip if the design is settled, or there is none to make)*
 
 Interview the user relentlessly about the plan until you reach shared
 understanding. Walk down each branch of the design decision tree, resolving
@@ -77,18 +95,6 @@ dependencies between decisions one by one.
 
 **DONE when:** every branch of the decision tree has a decision, and you can state
 the design back to the user in a few sentences with nothing left as "TBD".
-
-**Existing code → Map**
-
-Go up a layer of abstraction before touching anything. Give the user a map of the
-relevant modules and their callers, in the project's own vocabulary (domain glossary
-/ ubiquitous language) if it has one — plain module names if it doesn't.
-
-You are answering "what is this area, and what depends on it", not "what's wrong with
-it". Measurement is Stage 2, and a finding you can't place on this map is a finding
-you can't prioritize.
-
-**DONE when:** the user can point at the part of the map they care about.
 
 ### Stage 2 — Write it down
 

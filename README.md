@@ -18,7 +18,7 @@ graduate from into the full Standard edition when you want the finer-grained too
 
 | Command | Does | Bundles (from Standard) |
 |---|---|---|
-| `/robobuilder-lite:plan` | New feature: idea → grilled design → PRD. Existing code: map → `--health` measure. Both → issues | grill-me, to-prd, to-issues, zoom-out, health |
+| `/robobuilder-lite:plan` | Orient (map unfamiliar code, grill open decisions) → write it down (PRD, or `--health` dashboard) → issues | grill-me, to-prd, to-issues, zoom-out, health |
 | `/robobuilder-lite:build` | Pick an issue → red-green-refactor; bug branch when something breaks | triage, tdd, diagnose |
 | `/robobuilder-lite:improve` | Review before merge; `--deep` / `--security` / `--refactor` | diff-review, cross-review, grill, cso, improve-codebase-architecture, request-refactor-plan |
 | `/robobuilder-lite:ship` | Green tests → PR → merge → CI → deploy verify | ship, land-and-deploy |
