@@ -46,12 +46,22 @@ the failures that a "looks good to me" read never will.
    - `code-simplifier` — redundancy, over-abstraction, naming
    - `test-writer` — missing test coverage
    - `security-auditor` — OWASP perspective
-3. Apply the **grill mindset** yourself while merging their output: enumerate the
+
+   Expect some to come back with a progress note rather than a report — "now let me
+   check X" — instead of findings. That is a non-answer, not a clean result. Send it
+   back asking for the final report from what it already has, and say plainly that
+   finding nothing is a valid outcome; otherwise you get invented findings on the
+   retry. Tell each agent up front to budget its calls so it finishes.
+3. **Check a finding before you act on it.** A subagent's claim about the code is
+   evidence, not a verdict — open the file and confirm the behaviour it describes.
+   Wrong fixes applied confidently are worse than the defect, and a finding that
+   survives your own check is one you can defend. Report what you verified.
+4. Apply the **grill mindset** yourself while merging their output: enumerate the
    code's implicit assumptions (environment, inputs, state) and 5+ failure modes
    (concurrency, network failure, partial failure, retries, null/undefined, empty
    collections, exceeding limits). No flattery — if you want to say "mostly fine,"
    dig one level deeper.
-4. Merge into one prioritized verdict:
+5. Merge into one prioritized verdict:
 
 ```
 ## Merged verdict
