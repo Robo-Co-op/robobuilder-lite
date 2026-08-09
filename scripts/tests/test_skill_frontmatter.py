@@ -93,3 +93,71 @@ def test_merged_from_matches_readme_table() -> None:
         assert declared == listed, (
             f"{skill}: merged-from {declared} but README's table says {listed}"
         )
+
+
+# --- Scoring rubrics: the absent-measurement bug class -----------------------
+#
+# `plan --health` inherited a composite formula from Standard that could not
+# reach 10: the five weights sum to 0.90, so dividing by the raw total capped
+# a clean repo at 9.0, and "a SKIPPED tool redistributes its weight" never
+# said what it redistributes into. One dataset produced three different
+# composites depending on how a reader resolved that.
+#
+# It was found by running the skill, not by reading it, and it was one of four
+# defects of the same shape across the three repos: a measurement that never
+# happened counted as a pass. So this guards the class. Any skill that
+# aggregates per-item measurements must state both:
+#
+#   1. what it divides by  — an unstated denominator is where 0.90-vs-1.0 hid
+#   2. what happens to an item with no measurement — it must drop out, not
+#      score 0 (penalises absent tooling) and not score 10 (inflates)
+#
+# The registry is closed on purpose: a new scoring skill fails until someone
+# adds it, which is the point at which they have to answer both.
+
+SCORING_SIGNATURE = re.compile(r"(composite|Σ\(|quality[_ ]score|overall score)", re.IGNORECASE)
+
+STATES_DENOMINATOR = re.compile(
+    r"(÷|divid(?:e|ed|ing) by|number of \w+ scored|\bN of M\b|that actually ran)",
+    re.IGNORECASE,
+)
+
+STATES_MISSING_INPUT_RULE = re.compile(
+    r"(\bn/a\b|SKIPPED|drops? out|did not run|never ran)", re.IGNORECASE
+)
+
+SCORING_SKILLS = {"plan"}
+
+
+def test_scoring_skill_registry_matches_disk() -> None:
+    """A skill that aggregates scores must be registered, and vice versa."""
+    on_disk = {
+        p.parent.name
+        for p in _skill_files()
+        if SCORING_SIGNATURE.search(p.read_text(encoding="utf-8"))
+    }
+    unregistered = on_disk - SCORING_SKILLS
+    assert not unregistered, (
+        f"these skills aggregate scores but are not in SCORING_SKILLS: {sorted(unregistered)}. "
+        "Add them, and make sure each states its denominator and its skip rule."
+    )
+    stale = SCORING_SKILLS - on_disk
+    assert not stale, f"SCORING_SKILLS lists skills that no longer score: {sorted(stale)}"
+
+
+@pytest.mark.parametrize("skill", sorted(SCORING_SKILLS))
+def test_scoring_skill_states_its_denominator(skill: str) -> None:
+    text = (SKILLS_DIR / skill / "SKILL.md").read_text(encoding="utf-8")
+    assert STATES_DENOMINATOR.search(text), (
+        f"{skill} produces a composite but never says what it divides by. "
+        "An unstated denominator is how weights summing to 0.90 went unnoticed."
+    )
+
+
+@pytest.mark.parametrize("skill", sorted(SCORING_SKILLS))
+def test_scoring_skill_states_its_missing_input_rule(skill: str) -> None:
+    text = (SKILLS_DIR / skill / "SKILL.md").read_text(encoding="utf-8")
+    assert STATES_MISSING_INPUT_RULE.search(text), (
+        f"{skill} produces a composite but never says what happens to a tool that "
+        "did not run. A SKIPPED tool must drop out, not score 0 or 10."
+    )
