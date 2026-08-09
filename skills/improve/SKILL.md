@@ -69,13 +69,18 @@ The heavyweight version: **keep running rounds until there are zero findings.**
 - Rounds 1–N: invoke `code-simplifier`, `test-writer`, `security-auditor`, and (for
   UI changes) `e2e-tester` in parallel. Fix **Critical** and **Medium** findings
   immediately, then start the next round. Record **Minor** findings.
-- Exit when 0 critical AND 0 medium for **2 consecutive rounds**, or at a hard cap
-  of 5 rounds (beyond that it diverges).
+- Exit when 0 critical AND 0 medium for **2 consecutive rounds**, or once a round
+  stops surfacing anything **new**. Five rounds is the usual place that happens, but
+  it's a prompt to check rather than a hard stop — divergence is rounds repeating
+  themselves, not rounds accumulating.
 - Report: total rounds, total findings (Critical/Medium/Minor), final verdict, and
   learnings (failure patterns that repeated — apply them next time).
 
-Don't treat round or finding counts as KPIs — fewer is better. If the same finding
-persists for 3+ rounds, suspect a reviewer-side false positive. This mode is
+Don't treat round or finding counts as KPIs — fewer is better. If **the same finding**
+persists for 3+ rounds, suspect a reviewer-side false positive — but that is different
+from **the same area** yielding a *new* real defect each round, which means the area is
+hard and wants more attention, not less. Read the findings side by side before
+dismissing any of them. This mode is
 expensive; use it only before important merges.
 
 ### `--security` — security audit
