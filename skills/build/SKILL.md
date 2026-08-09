@@ -36,6 +36,10 @@ path: one test → one implementation, and a feedback loop before any hypothesis
 
 ## How
 
+Two stages, plus a branch. The **bug branch** below is not a third stage — Stage 1
+sends you into it *before* the TDD loop whenever the issue is a bug, and you come
+back to Stage 2 holding a reproduction.
+
 ### Stage 1 — Pick
 
 Find the next issue to work on. Issues move through a small state flow:
@@ -95,7 +99,7 @@ Per-cycle checklist:
 **DONE when:** every prioritized behavior has a passing behavior-driven test and
 the code is refactored clean.
 
-### Bug branch — when something breaks
+### Bug branch — entered from Stage 1, before the TDD loop
 
 Don't guess. Build a feedback loop first.
 
