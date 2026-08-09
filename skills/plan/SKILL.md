@@ -127,10 +127,13 @@ here — findings become issues in Stage 3.
    shell linter. Offer to persist the detected stack to CLAUDE.md.
 2. **Run each tool** sequentially, capturing exit code, duration, and the last ~50
    lines of output. A missing tool is `SKIPPED`, not a failure.
-3. **Score** each category 0–10 and compute a weighted composite
-   (tests 28%, type check 22%, lint 18%, dead code 13%, shell 9%; redistribute a
-   skipped tool's weight). Present a dashboard table with a composite score and,
-   for anything below 7, the actual tool output so the user can act.
+3. **Score** each category 0–10 (tests 28, type check 22, lint 18, dead code 13,
+   shell 9) and compute the composite as **Σ(score × weight) ÷ Σ(weight of the
+   categories that actually ran)**. Dividing by the *active* weights is what makes a
+   clean repo score 10.0 and makes a `SKIPPED` tool redistribute itself — the raw
+   weights sum to 90, so summing them directly caps a perfect codebase at 9.0 and
+   leaves "redistribute" ambiguous. Present a dashboard table with the composite
+   and, for anything below 7, the actual tool output so the user can act.
 4. **Rank** the findings by `weight × (10 − score)`, and place each on the Stage 1
    map — a failure in a module nothing calls is not the same problem as the same
    failure under everything.
