@@ -96,6 +96,17 @@ Per-cycle checklist:
 [ ] No speculative features added
 ```
 
+Dispatch the **`tdd-pair`** agent when you catch yourself about to skip red — code
+written before a failing test, a test edited to match code that already exists, a "just
+this once" green-to-green step. It returns OK / VIOLATION per check and nothing else, so
+it costs one short call.
+
+The checklist above is self-assessment, and that is the weak link by construction: the
+agent writing the code is the agent deciding whether it wrote a test first, which is the
+one judgement it has an incentive to get wrong. `tdd-pair` ships with Lite for exactly
+this and was previously never called — the cycle where you were tempted and did not ask
+is the cycle to ask.
+
 **DONE when:** every prioritized behavior has a passing behavior-driven test and
 the code is refactored clean.
 
