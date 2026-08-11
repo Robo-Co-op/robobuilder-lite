@@ -75,6 +75,11 @@ Go up a layer of abstraction before touching anything. Give the user a map of th
 relevant modules and their callers, in the project's own vocabulary (domain glossary
 / ubiquitous language) if it has one — plain module names if it doesn't.
 
+For anything larger than a handful of files, dispatch the **`codebase-explorer`** agent
+to build the map. That is its whole job — module relationships, call graphs, key
+abstractions, entry points — and running it in a subagent keeps the file-by-file reading
+out of this context, which is the point of mapping before you dig.
+
 You are answering "what is this area, and what depends on it", not "what's wrong with
 it". Measurement is Stage 2, and a finding you can't place on this map is a finding
 you can't prioritize.

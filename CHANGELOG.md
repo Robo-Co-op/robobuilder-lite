@@ -2,6 +2,21 @@
 
 All notable changes to robobuilder-lite.
 
+## [1.1.1] — 2026-08-11
+
+### Fixed
+- Two of the six bundled agents shipped with no skill calling them. `tdd-pair` is now
+  dispatched by `build` at the point where red gets skipped — the per-cycle checklist is
+  self-assessment, and the agent writing the code is the agent deciding whether it wrote
+  a test first, which is the one judgement it has an incentive to get wrong. The merge of
+  Standard's `tdd` into `build` had dropped the only dispatch, and with it the
+  maker-≠-checker safeguard
+- `codebase-explorer` is now dispatched by `plan`'s Stage 1 map, which is its whole job
+
+### Added
+- Test: every agent in `agents/` must be dispatched by some skill. It strips fenced
+  blocks and blockquotes first, since an agent named only in example output is not wired
+
 ## [1.1.0] — 2026-08-09
 
 The four commands now serve existing code as well as new features. `plan` was
