@@ -2,6 +2,27 @@
 
 All notable changes to robobuilder-lite.
 
+## [1.2.0] — 2026-08-17
+
+### Changed
+- `improve` now treats a diff that adds or changes a **defence** — a guard, hook,
+  validator, permission check, auth rule, RLS policy, rate limit, sanitiser — as an
+  automatic `--deep` case, and requires the reviewer to attack it with 20+ concrete
+  bypass attempts before reporting. The attempt list has to be built independently of
+  the implementation, cover the allow side as well as the block side, and end up in the
+  test suite as regressions. `--deep` re-runs and extends that list every round, since
+  fixing one bypass routinely opens another.
+
+  This came out of a real session. A PreToolUse hook was written to stop an autonomous
+  loop from reaching live-trading modules, shipped with 37 passing tests, and reviewed
+  by three subagents. An independently built list of 26 bypass attempts then walked
+  through 13 of them — `python -c` for arbitrary execution, `py` and `python.exe` as
+  alternative launchers, uppercase paths, shell redirection onto protected files, and
+  `rm` on the hook file itself. The tests were green because they encoded the same
+  paths the implementation already handled: the suite and the code shared one blind
+  spot. Two anti-patterns are named for this — treating a green suite as proof a
+  defence holds, and shipping a defence you never watched fail.
+
 ## [1.1.1] — 2026-08-11
 
 ### Fixed
