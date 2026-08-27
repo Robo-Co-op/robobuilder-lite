@@ -27,6 +27,10 @@ This is the Lite bundle of `diff-review`, `cross-review`, `grill`, `cso`,
 Use `/robobuilder-lite:improve` when:
 - You're about to merge and want a review → default
 - It's an important merge (auth, payments, data model) → `--deep`
+- **The diff adds or changes a defence** — a guard, hook, validator, permission check,
+  auth rule, RLS policy, rate limit, sanitiser → **`--deep`, always**. A defence is the
+  one kind of code whose bugs are invisible in normal use: it looks like it works
+  precisely because nothing is attacking it yet.
 - You want a dedicated security pass → `--security`
 - Tech debt is slowing you down and you want a safe plan to pay it → `--refactor`
 
@@ -64,7 +68,7 @@ the failures that a "looks good to me" read never will.
 
    If it fires and cannot run — no dev server, no reachable URL, no browser — that is
    a result. Carry `UNVERIFIED: rendered behaviour not checked (<reason>)` into the
-   verdict in step 6. A render check that vanishes quietly is an unmeasured thing
+   verdict in step 7. A render check that vanishes quietly is an unmeasured thing
    counted as a pass.
 
    Expect some to come back with a progress note rather than a report — "now let me
@@ -81,7 +85,24 @@ the failures that a "looks good to me" read never will.
    (concurrency, network failure, partial failure, retries, null/undefined, empty
    collections, exceeding limits). No flattery — if you want to say "mostly fine,"
    dig one level deeper.
-6. Merge into one prioritized verdict:
+6. **If the diff adds or changes a defence, attack it yourself before you report.**
+   Subagents review the code you wrote; they do not systematically enumerate the
+   inputs you failed to imagine. Write a throwaway script that runs the defence
+   against **20+ concrete bypass attempts** and prints block/pass for each. Cover at
+   minimum: casing, whitespace and quoting variants, alternative spellings of the
+   same tool (`python` / `python3` / `python.exe` / `py`), absolute vs relative paths,
+   path traversal, command chaining (`&&`, `;`, `|`), indirection (`sh -c`, `-c`/`-m`,
+   env-var expansion), copy-then-use, and **disabling the defence itself** (deleting,
+   renaming or overwriting it). Then run the allow-side too — a defence that blocks
+   legitimate work is a failure, not a win. Paste the block/pass table into your
+   report and lock every attempt into the test suite as a regression.
+
+   A passing test suite is not evidence here. Tests you wrote encode the paths you
+   thought of, so they share the blind spot with the implementation — the suite goes
+   green and the hole stays open. Only an attempt list built independently of the
+   implementation tells you anything.
+
+7. Merge into one prioritized verdict:
 
 ```
 ## Merged verdict
@@ -121,6 +142,10 @@ The heavyweight version: **keep running rounds until there are zero findings.**
   stops surfacing anything **new**. Five rounds is the usual place that happens, but
   it's a prompt to check rather than a hard stop — divergence is rounds repeating
   themselves, not rounds accumulating.
+- **Every round that touches a defence, re-run the bypass list from step 6** — and
+  extend it with anything the round's findings suggest. Fixing one bypass often opens
+  another, and a defence hardened against last round's list is not hardened against
+  this round's. The list only ratchets up.
 - Report: total rounds, total findings (Critical/Medium/Minor), final verdict, and
   learnings (failure patterns that repeated — apply them next time).
 
@@ -175,6 +200,14 @@ A focused pass distilled from the CSO skill:
   Agent calls), not one after another.
 - **Flattery review.** "Looks great, ship it." If you didn't try to break it, you
   didn't review it.
+- **Treating a green suite as proof that a defence holds.** The tests were written by
+  whoever wrote the guard, so they cover the same imagined paths and miss the same
+  real ones. Measured case: a hook shipped with 37 passing tests; an independently
+  built list of 26 bypass attempts walked straight through 13 of them — including
+  deleting the hook file itself. Attack it, then trust it.
+- **Shipping a defence you never watched fail.** If you cannot name a specific input
+  you tried that the guard blocked, and one it correctly let through, you have not
+  tested it — you have described it.
 - **Reporting unverifiable findings in `--security`.** A finding you can't point to
   concrete code for is noise — gate on confidence.
 - **A refactor "big bang" commit.** Each commit must leave the codebase working.
