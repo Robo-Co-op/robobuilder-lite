@@ -2,6 +2,40 @@
 
 All notable changes to robobuilder-lite.
 
+## [1.3.0] — 2026-08-27
+
+`improve` is the whole review surface here, and it is also the review step Pro's
+`dev-loop` invokes in Phase 2 of every slice it ships. Its default mode dispatched
+three agents, none of which can drive a browser, and `--deep` reached for
+`e2e-tester` only "(for UI changes)". So the routine answer to "does this render
+correctly" was a verdict about a page nobody had opened — and because `dev-loop`
+delegates here, that gap reached every autonomous loop downstream.
+
+### Changed
+- The browser check now fires on a **fact about the diff** rather than a judgement
+  about it. "(for UI changes)" asked whoever wrote the change whether it counted as
+  UI, which is the judgement the independent check exists to replace — the same bug
+  `build` carried until `tdd-pair`'s trigger became observable in 1.1.1. Asked of the
+  person who just wrote it, the answer is nearly always "not really". Both modes now
+  settle it by running the diff through a grep for renderable extensions; `--deep`
+  runs the check once in Round 0 and dispatches every round after.
+- An unrunnable check is a reported result, not a non-event. No dev server, no
+  reachable URL, no browser → `UNVERIFIED` goes into the verdict under a **Not
+  checked** heading, and in `--deep` it carries across rounds rather than ageing out.
+  Exiting on "0 critical, 0 medium" with an `UNVERIFIED` render line still standing
+  means the loop ended on a question nobody answered.
+
+### Fixed
+- `--deep` referenced "Round 0's `RENDERS` check" before Round 0 ran one — a dangling
+  reference to a step that did not exist. Round 0 now runs it.
+
+### Added
+- `scripts/tests/test_browser_verification.py` — `improve` can reach a browser, the
+  trigger is observable, and an unrunnable check surfaces. A dispatch counts only when
+  the agent is the subject of a list item: naming it in prose is not wiring it, a
+  distinction that came from falsifying the Standard version of this guard and finding
+  it still green after the real call had been deleted.
+
 ## [1.2.0] — 2026-08-17
 
 ### Changed

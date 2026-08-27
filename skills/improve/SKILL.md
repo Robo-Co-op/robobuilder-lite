@@ -1,6 +1,6 @@
 ---
 name: improve
-description: "[Lite-3 Improve] Review and refactor the current changes: default 3-agent diff review, --deep round-based review, --security audit, --refactor tiny-commit plan. Use before merging, for a hard security pass, or to plan paying down tech debt."
+description: "[Lite-3 Improve] Review and refactor the current changes: default parallel diff review, --deep round-based review, --security audit, --refactor tiny-commit plan. Use before merging, for a hard security pass, or to plan paying down tech debt."
 origin: robobuilder-lite
 upstream: https://github.com/Robo-Co-op/robobuilder-standard
 merged-from: diff-review, cross-review, grill, cso, improve-codebase-architecture, request-refactor-plan
@@ -14,7 +14,7 @@ allowed-tools: [Read, Glob, Grep, Bash, Agent]
 The review-and-refactor command. One default mode plus three flags cover the whole
 "make it better before it lands" surface:
 
-- **default** — daily diff review (3 subagents in parallel → one prioritized verdict)
+- **default** — daily diff review (subagents in parallel → one prioritized verdict)
 - **`--deep`** — round-based review that iterates until findings hit zero
 - **`--security`** — a focused security audit
 - **`--refactor`** — an architecture pass that produces a tiny-commit refactor plan
@@ -46,26 +46,46 @@ the failures that a "looks good to me" read never will.
 ### Default — daily diff review
 
 1. Get an overview: `git diff main...HEAD --stat` then `git diff main...HEAD`.
-2. Invoke **3 subagents in parallel** (multiple Agent calls in one message):
+2. **Ask the diff whether this change renders.** Run it — don't decide from what the
+   work felt like:
+
+   ```sh
+   git diff main...HEAD --name-only \
+     | grep -qE '\.(html|css|scss|sass|less|tsx|jsx|vue|svelte|astro)$' && echo RENDERS
+   ```
+
+3. Invoke the subagents **in parallel** (multiple Agent calls in one message):
    - `code-simplifier` — redundancy, over-abstraction, naming
    - `test-writer` — missing test coverage
    - `security-auditor` — OWASP perspective
+   - `e2e-tester` — **whenever step 2 printed `RENDERS`.** The other three read the
+     change; this is the only one that opens it.
+
+   The trigger is a fact about the diff rather than a call on whether the change
+   "counts as UI", because that call belongs to whoever wrote it, and the honest
+   answer from the person who just wrote it is nearly always "not really". A review
+   that skips it still prints a verdict — about a page it never rendered.
+
+   If it fires and cannot run — no dev server, no reachable URL, no browser — that is
+   a result. Carry `UNVERIFIED: rendered behaviour not checked (<reason>)` into the
+   verdict in step 7. A render check that vanishes quietly is an unmeasured thing
+   counted as a pass.
 
    Expect some to come back with a progress note rather than a report — "now let me
    check X" — instead of findings. That is a non-answer, not a clean result. Send it
    back asking for the final report from what it already has, and say plainly that
    finding nothing is a valid outcome; otherwise you get invented findings on the
    retry. Tell each agent up front to budget its calls so it finishes.
-3. **Check a finding before you act on it.** A subagent's claim about the code is
+4. **Check a finding before you act on it.** A subagent's claim about the code is
    evidence, not a verdict — open the file and confirm the behaviour it describes.
    Wrong fixes applied confidently are worse than the defect, and a finding that
    survives your own check is one you can defend. Report what you verified.
-4. Apply the **grill mindset** yourself while merging their output: enumerate the
+5. Apply the **grill mindset** yourself while merging their output: enumerate the
    code's implicit assumptions (environment, inputs, state) and 5+ failure modes
    (concurrency, network failure, partial failure, retries, null/undefined, empty
    collections, exceeding limits). No flattery — if you want to say "mostly fine,"
    dig one level deeper.
-5. **If the diff adds or changes a defence, attack it yourself before you report.**
+6. **If the diff adds or changes a defence, attack it yourself before you report.**
    Subagents review the code you wrote; they do not systematically enumerate the
    inputs you failed to imagine. Write a throwaway script that runs the defence
    against **20+ concrete bypass attempts** and prints block/pass for each. Cover at
@@ -82,29 +102,47 @@ the failures that a "looks good to me" read never will.
    green and the hole stays open. Only an attempt list built independently of the
    implementation tells you anything.
 
-6. Merge into one prioritized verdict:
+7. Merge into one prioritized verdict:
 
 ```
 ## Merged verdict
 ### Must fix (before merge)
 ### Should fix (recommended in this PR)
 ### Nice to have (can defer)
+### Not checked
+- UNVERIFIED: <what nobody measured, and why> — omit this heading only when it is empty
 ## One-liner: SHIP / FIX FIRST
 ```
+
+`SHIP` on a diff that renders, with an `UNVERIFIED` render line still standing, is a
+verdict about a page nobody opened. Say so in the one-liner.
 
 ### `--deep` — round-based review (before important merges)
 
 The heavyweight version: **keep running rounds until there are zero findings.**
 
-- Round 0: `git diff main...HEAD --stat`, confirm the affected files and scale.
-- Rounds 1–N: invoke `code-simplifier`, `test-writer`, `security-auditor`, and (for
-  UI changes) `e2e-tester` in parallel. Fix **Critical** and **Medium** findings
-  immediately, then start the next round. Record **Minor** findings.
+- Round 0: `git diff main...HEAD --stat`, confirm the affected files and scale, and
+  settle once whether this change renders — by running the same check the default mode
+  runs, not by recalling the answer:
+
+  ```sh
+  git diff main...HEAD --name-only \
+    | grep -qE '\.(html|css|scss|sass|less|tsx|jsx|vue|svelte|astro)$' && echo RENDERS
+  ```
+- Rounds 1–N: invoke `code-simplifier`, `test-writer`, `security-auditor` in parallel,
+  plus `e2e-tester` **in every round once Round 0's `RENDERS` check fired** — the same
+  observable trigger as the default mode, not a fresh judgement call each round. Fix
+  **Critical** and **Medium** findings immediately, then start the next round. Record
+  **Minor** findings.
+- An `UNVERIFIED` render line carries across every round and does not age out. It is
+  not a Minor finding and rounds do not clear it: an unrun check is not a clean one,
+  and exiting on "0 critical, 0 medium" while it still stands means the loop ended
+  on a question nobody answered.
 - Exit when 0 critical AND 0 medium for **2 consecutive rounds**, or once a round
   stops surfacing anything **new**. Five rounds is the usual place that happens, but
   it's a prompt to check rather than a hard stop — divergence is rounds repeating
   themselves, not rounds accumulating.
-- **Every round that touches a defence, re-run the bypass list from step 5** — and
+- **Every round that touches a defence, re-run the bypass list from step 6** — and
   extend it with anything the round's findings suggest. Fixing one bypass often opens
   another, and a defence hardened against last round's list is not hardened against
   this round's. The list only ratchets up.
