@@ -107,8 +107,30 @@ one judgement it has an incentive to get wrong. `tdd-pair` ships with Lite for e
 this and was previously never called — the cycle where you were tempted and did not ask
 is the cycle to ask.
 
+**If the slice is a defence, TDD alone is not enough.** A guard, validator, permission
+check, auth rule, rate limit, sanitiser or hook has a property ordinary features do not:
+its bugs are invisible in normal use, because nothing is attacking it yet. Red-green-
+refactor drives the behaviours you imagined, and the behaviours you imagined are exactly
+the ones the guard already handles. Measured case: a rate limiter left this stage with a
+green unit suite and two green E2E specs; a list of 25 bypass attempts built later —
+without looking at the implementation — walked through **16** of them, and one of the
+holes was "send no header at all".
+
+So while still in this stage:
+
+- **Name it.** Say plainly in the issue and the commit that this slice is a defence.
+  Handing `improve` a diff it has to guess about is how the attack step gets skipped.
+- **Write the allow-side and the deny-side.** A guard that blocks legitimate work is a
+  failure too, and it is the half TDD naturally covers.
+- **Start the bypass list here, don't defer it all to review.** Even ten attempts written
+  before you are attached to the implementation are worth more than fifty written after.
+  `/robobuilder-lite:improve` will run the full pass (`--deep`, 20+ attempts, allow-side,
+  regression-locked) — but arriving there with nothing means the first real adversarial
+  thought happens after the code is already written.
+
 **DONE when:** every prioritized behavior has a passing behavior-driven test and
-the code is refactored clean.
+the code is refactored clean — and, if the slice is a defence, it is labelled as one and
+has an attempt list started.
 
 ### Bug branch — entered from Stage 1, before the TDD loop
 
