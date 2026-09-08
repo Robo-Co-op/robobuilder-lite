@@ -43,6 +43,23 @@ with.
 /plugin install robobuilder-lite@robo-coop-tools
 /reload-plugins
 ```
+## Update
+
+```sh
+/plugin marketplace update robo-coop-tools
+/plugin update robobuilder-lite@robo-coop-tools
+/reload-plugins
+```
+
+The version shown by `/plugin` should match the top entry of `CHANGELOG.md`. If it
+does not, the marketplace cache is stale.
+
+- **`/plugin` is CLI-only** — it does not exist in the web or desktop app.
+- **A running session keeps the version it started with.** Plugins are snapshotted when
+  the session opens, so a new session (or `/reload-plugins`) is required.
+- If your copy under `~/.claude/plugins/` is a plain `git clone` rather than a
+  marketplace install, `/plugin update` will not touch it — run `git pull` there.
+
 
 The marketplace catalog (`robo-coop-tools`) lives in the Standard repo and lists all
 three editions — that's why the `marketplace add` line points there even when you
