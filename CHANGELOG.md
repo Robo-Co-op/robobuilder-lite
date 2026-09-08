@@ -2,6 +2,50 @@
 
 All notable changes to robobuilder-lite.
 
+## [1.4.0] — 2026-09-08
+
+A rate limiter went through this bundle's own cycle and came out with a green unit
+suite and two green E2E specs. A list of 25 bypass attempts, built later without
+looking at the implementation, walked through **16** of them — one of the holes was
+"send no header at all". Fixing it took five review rounds, and rounds 2, 3 and 4 each
+found a hole introduced by the round before.
+
+`improve` already said the right things: a defence means `--deep`, 20+ bypass attempts,
+re-run the list every round. What failed was the trigger. `RENDERS` is decided by a
+grep over the diff, and the skill explains why — "that call belongs to whoever wrote it,
+and the honest answer from the person who just wrote it is nearly always 'not really'".
+The defence trigger sat in prose in the `When` section, so it was exactly the judgement
+call that reasoning rules out, at higher stakes.
+
+### Changed
+- **`improve` now decides "is this a defence" mechanically**, next to `RENDERS` and for
+  the same reason. `DEFENCE` makes `--deep` and the bypass list mandatory rather than
+  advisory. The grep over-fires — renaming a variable called `token` prints `DEFENCE` —
+  and that is the intended direction of the error: over-firing costs one round,
+  under-firing ships an unattacked guard.
+- **`--deep` no longer exits while its own fixes keep opening holes.** A finding caused
+  by the previous round's fix resets the consecutive-clean counter. It is the signal
+  that matters most and the easiest to rationalise away, because each fix looks correct
+  in isolation.
+- **The verdict carries `UNVERIFIED: defence not attacked`** when the bypass list did
+  not run, and the one-liner says the guard is undefended whatever colour the suite is.
+
+### Added
+- **Step 6 now says to model the deployment, not localhost.** The first bypass list in
+  the measured case sent raw forwarding headers with no platform hop, so it scored the
+  guard against a topology that does not exist. It also says to rebuild the list when
+  the threat model moves, not only when findings land.
+- **Every test written during a review must be watched failing before it counts as
+  evidence** — the rule `gate-builder` applies to the loop gate, applied here. Two
+  measured failures from one session: a spec that asserted on a message string an
+  unrelated fallback also emitted (green while testing nothing), and a bypass spec whose
+  failure path forgot to `exit 1` (reported "0 bypasses" on a build with seven).
+- **`build` now handles defences.** It had no mention of adversarial input at all, so a
+  guard went through plain red-green-refactor — and the behaviours you imagine are the
+  ones the guard already handles. A defence slice is now named as one, writes the
+  allow-side as well as the deny-side, and starts its attempt list before the author is
+  attached to the implementation.
+
 ## [1.3.0] — 2026-08-27
 
 `improve` is the whole review surface here, and it is also the review step Pro's
