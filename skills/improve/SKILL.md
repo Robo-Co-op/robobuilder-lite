@@ -46,13 +46,29 @@ the failures that a "looks good to me" read never will.
 ### Default — daily diff review
 
 1. Get an overview: `git diff main...HEAD --stat` then `git diff main...HEAD`.
-2. **Ask the diff whether this change renders.** Run it — don't decide from what the
-   work felt like:
+2. **Ask the diff two questions. Run them — don't decide from what the work felt like:**
 
    ```sh
+   # Does it render?
    git diff main...HEAD --name-only \
      | grep -qE '\.(html|css|scss|sass|less|tsx|jsx|vue|svelte|astro)$' && echo RENDERS
+
+   # Is it a defence?
+   git diff main...HEAD -U0 \
+     | grep -qiE 'rate.?limit|throttl|quota|auth[nz]?|token|password|secret|credential|sanitiz|escap|validat|permission|authoriz|csrf|cors|\brls\b|policy|guard|middleware|allow.?list|deny.?list|hash|hmac|signature|nonce|x-forwarded-for' \
+     && echo DEFENCE
    ```
+
+   **`DEFENCE` makes `--deep` and step 6 mandatory, not advisory.** The same reasoning
+   that made `RENDERS` mechanical applies here with higher stakes: asked whether the
+   thing they just wrote "counts as a defence", the author says "it's just a counter".
+   Measured case: a rate limiter shipped with a green unit suite and two green E2E
+   specs; an independently built list of 25 bypass attempts walked through **16** of
+   them, including simply omitting a header.
+
+   The grep over-fires — a diff that merely renames a variable called `token` prints
+   `DEFENCE`. That is the intended direction of the error. Over-firing costs one
+   round; under-firing ships an unattacked guard.
 
 3. Invoke the subagents **in parallel** (multiple Agent calls in one message):
    - `code-simplifier` — redundancy, over-abstraction, naming
@@ -97,10 +113,30 @@ the failures that a "looks good to me" read never will.
    legitimate work is a failure, not a win. Paste the block/pass table into your
    report and lock every attempt into the test suite as a regression.
 
+   **Model the deployment, not localhost.** A list built against your dev machine
+   tests a shape that never ships. If a platform (load balancer, CDN, reverse proxy)
+   sits in front in production and rewrites what the defence reads, put that in the
+   harness — otherwise every attempt passes for the wrong reason. Measured case: a
+   first bypass list sent raw forwarding headers with no platform hop, so it scored
+   the guard against a topology that does not exist.
+
+   **Rebuild the list whenever the threat model moves, not only when findings land.**
+   Changing which end of a header you trust, which key a lock uses, or what a counter
+   counts invalidates the old list's assumptions even when every entry still passes.
+
    A passing test suite is not evidence here. Tests you wrote encode the paths you
    thought of, so they share the blind spot with the implementation — the suite goes
    green and the hole stays open. Only an attempt list built independently of the
    implementation tells you anything.
+
+   **Every test you write during the review must be watched failing before it counts
+   as evidence.** Plant the defect it is supposed to catch, confirm it goes red and
+   exits non-zero, then restore. Two measured failures from one session: a rate-limit
+   spec that asserted on a message string also emitted by an unrelated fallback (green
+   while testing nothing), and a bypass spec whose failure path forgot to `exit 1`
+   (reported "0 bypasses" on a build with seven). A test nobody watched fail is a
+   claim, not a check — the rule `gate-builder` applies to the loop gate, applied to
+   the tests you add here.
 
 7. Merge into one prioritized verdict:
 
@@ -117,18 +153,18 @@ the failures that a "looks good to me" read never will.
 `SHIP` on a diff that renders, with an `UNVERIFIED` render line still standing, is a
 verdict about a page nobody opened. Say so in the one-liner.
 
+The same holds for `DEFENCE`: if the bypass list did not run, the verdict carries
+`UNVERIFIED: defence not attacked (<reason>)` and the one-liner says the guard is
+undefended, whatever colour the test suite is.
+
 ### `--deep` — round-based review (before important merges)
 
 The heavyweight version: **keep running rounds until there are zero findings.**
 
 - Round 0: `git diff main...HEAD --stat`, confirm the affected files and scale, and
-  settle once whether this change renders — by running the same check the default mode
-  runs, not by recalling the answer:
-
-  ```sh
-  git diff main...HEAD --name-only \
-    | grep -qE '\.(html|css|scss|sass|less|tsx|jsx|vue|svelte|astro)$' && echo RENDERS
-  ```
+  settle once whether this change renders **and whether it is a defence** — by running
+  the same two checks the default mode runs, not by recalling the answer. Both flags
+  carry across every round and neither ages out.
 - Rounds 1–N: invoke `code-simplifier`, `test-writer`, `security-auditor` in parallel,
   plus `e2e-tester` **in every round once Round 0's `RENDERS` check fired** — the same
   observable trigger as the default mode, not a fresh judgement call each round. Fix
@@ -139,7 +175,15 @@ The heavyweight version: **keep running rounds until there are zero findings.**
   and exiting on "0 critical, 0 medium" while it still stands means the loop ended
   on a question nobody answered.
 - Exit when 0 critical AND 0 medium for **2 consecutive rounds**, or once a round
-  stops surfacing anything **new**. Five rounds is the usual place that happens, but
+  stops surfacing anything **new**.
+- **A finding caused by the previous round's own fix resets the counter.** This is the
+  signal that matters most and the easiest one to rationalise away, because each fix
+  looks correct in isolation. Measured case: five rounds on one rate limiter, where
+  rounds 2, 3 and 4 each found a hole introduced by the round before — a fix that
+  restored the original bypass under a shorter header, a fix that returned a poisoned
+  connection to the pool and could stall every request in the app, and a fix that
+  removed the global ceiling it was meant to preserve. Three consecutive self-inflicted
+  findings is not noise; it means the area is hard and the loop is doing its job. Five rounds is the usual place that happens, but
   it's a prompt to check rather than a hard stop — divergence is rounds repeating
   themselves, not rounds accumulating.
 - **Every round that touches a defence, re-run the bypass list from step 6** — and
