@@ -39,6 +39,16 @@ already succeeded.
 
 ## How
 
+### Pending-review handoff (not a completed ship)
+
+When an independent reviewer is unavailable under the active project policy,
+keep the verdict `PENDING` / `needs_human_review`. A draft PR may be used to request
+human review only if the user authorized publication and the project's own
+commit/publication checks pass. Include unresolved gate results, exact diff/head,
+and the missing review; stop before Land. This does not waive independent review,
+mark the loop complete, or permit merge/deploy. If publication itself is blocked,
+prepare a local handoff instead.
+
 ### Stage 1 — Pre-flight
 
 1. **Detect platform and base branch** from the git remote (GitHub via `gh`, or
