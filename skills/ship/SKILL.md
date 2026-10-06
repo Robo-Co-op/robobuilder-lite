@@ -16,7 +16,7 @@ verified deploy in one flow:
 
 1. **Pre-flight** — branch check, merge the base, run the full test suite
 2. **Package** — bump the version, update CHANGELOG, commit, push, open a PR
-3. **Land** — pre-merge readiness gate, merge, wait for CI until green
+3. **Land** — latest PR-head CI, independent review and approvals, merge, then verify post-merge CI
 4. **Verify** — detect the deploy, check production health / canary
 
 This is the Lite bundle of `ship` and `land-and-deploy` from Standard. It runs
@@ -70,11 +70,16 @@ already succeeded.
 
 ### Stage 3 — Land
 
-1. **Pre-merge readiness gate** — reviews run (`/robobuilder-lite:improve`), tests
-   green, docs updated. Stop if the gate fails.
-2. **Merge the PR.**
-3. **Wait for CI** — poll until it goes green. If CI fails, stop and surface the
-   failure (this is where `--deep` review would have caught it).
+1. **Pre-merge readiness gate** — identify the PR's current head SHA. Require the
+   required CI checks to succeed on that exact SHA, independent review
+   (`/robobuilder-lite:improve`), updated docs, and all required approvals. Missing,
+   pending, failed, stale, or unverifiable checks/reviews stop this stage. Re-check
+   the head immediately before merge; a changed head invalidates readiness.
+2. **Merge the PR only within the user's authorized scope** and repository rules.
+   A request to develop, package, or open a PR does not authorize merge or deploy.
+   At a boundary, hand off the prepared result and wait; never infer approval.
+3. **Verify post-merge CI** — this is an additional check, never a substitute for
+   successful PR-head checks before merge. If it fails, stop and surface the failure.
 
 ### Stage 4 — Verify
 
@@ -83,13 +88,15 @@ already succeeded.
 3. **Health / canary check** — hit the production URL, check for console errors,
    failed requests, and obvious performance regressions. Report the result.
 
-### Stops only for
+### Stops for
 
 - On the base branch (abort)
 - Unresolvable merge conflicts
 - In-branch test failures
 - A MAJOR version bump
 - Readiness-gate failures (reviews/tests not clear)
+- Missing authorization for push / PR / merge / deploy
+- Missing, pending, failed or stale PR-head CI / independent review / required approval
 - CI failure after merge
 
 ### Never stops for
@@ -118,7 +125,7 @@ accumulates.**
 > **ship (Package):** version 1.3.1 → 1.3.2 (PATCH, auto — found in `plugin.json`, no
 > `VERSION` file in this repo). CHANGELOG updated.
 > Committed, pushed, PR #212 opened.
-> **ship (Land):** readiness gate clear (improve ran). Merged #212. CI… green.
+> **ship (Land):** exact PR-head CI green, independent review and required approvals current. Merge authorized. Merged #212. Post-merge CI green.
 > **ship (Verify):** Vercel deploy live. Health check: 200, no console errors. Done.
 
 ## Anti-pattern
