@@ -2,6 +2,15 @@
 
 All notable changes to robobuilder-lite.
 
+## [1.5.2] — 2026-11-11
+
+### Changed
+- **CI runs once per change, not twice.** `tests.yml` ran on push to every branch and again
+  on the PR, so each PR push used the org's Actions minutes twice. When those run out (2,000
+  free + a $5 budget), all Actions stop org-wide. That happened on 2026-10-30. The PR run now
+  only happens for forks, and a newer push cancels the older run. Push runs still cover every
+  branch.
+
 ## [1.5.1] — 2026-11-11
 
 ### Fixed
