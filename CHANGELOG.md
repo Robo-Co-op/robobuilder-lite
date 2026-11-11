@@ -2,6 +2,35 @@
 
 All notable changes to robobuilder-lite.
 
+## [1.5.0] — 2026-11-11
+
+`improve` was burning tokens on reviews that had nothing to find. The main cause was
+the v1.4.0 `DEFENCE` grep. It over-fired by design, but also on things that can never
+be a guard: file paths and hunk headers, removed lines, "auth" inside "author", every
+LLM token count, and diffs that only touched tests or docs. Each false hit forced
+`--deep`, the most expensive mode. This release cuts that noise and keeps both safety
+rules v1.4.0 added: `DEFENCE` still over-fires rather than under-fires, and `--deep`
+still keeps running rounds while its own fixes open new holes.
+
+### Changed
+- **`DEFENCE` matches whole words on added lines only, and skips test and doc files.**
+  camelCase and snake_case are split before matching, so `requireAuth`, `csrfToken` and
+  `rate_limit` still fire. `jwt`, `bearer` and `oauth` were added to make up for
+  dropping plural `tokens`. A new test, `test_defence_trigger.py`, runs the skill's own
+  pipeline against 21 concrete diffs: guards that must fire and lookalikes that must not.
+- **Small, harmless diffs are reviewed inline.** If neither `DEFENCE` nor `RENDERS`
+  fires and the diff is ≤ 50 lines (by `--numstat`), `improve` does the three review
+  passes itself and dispatches no subagents.
+- **Subagents get the diff, not the repo.** `improve` pastes the diff into each agent's
+  prompt, and `code-simplifier`, `test-writer` and `security-auditor` now start from
+  that diff instead of re-running `git diff` or reading whole files.
+- **`code-simplifier` runs on haiku.**
+
+### Not changed, on purpose
+- No path-based defence check and no `--deep` round cap. Both would undo v1.4.0's
+  design: the rate limiter that motivated it needed five rounds, and three of its
+  holes were opened by the previous round's fix.
+
 ## [1.4.1] — 2026-11-11
 
 ### Changed

@@ -46,17 +46,25 @@ the failures that a "looks good to me" read never will.
 ### Default — daily diff review
 
 1. Get an overview: `git diff main...HEAD --stat` then `git diff main...HEAD`.
-2. **Ask the diff two questions. Run them — don't decide from what the work felt like:**
+2. **Ask the diff three questions. Run them — don't decide from what the work felt like:**
 
    ```sh
+   # Is it a defence? Added lines only, tests and docs skipped, whole words
+   # (camelCase and snake_case are split first, so requireAuth still counts).
+   git diff main...HEAD -U0 \
+     | awk '/^\+\+\+ / { f = substr($0, 5); skip = f ~ /(^|\/)(docs?|tests?|__tests__|e2e|fixtures?)\// || f ~ /\.(md|mdx|txt|rst)$/ || f ~ /([._]test|[._]spec)\.[^\/]*$/ || f ~ /\/test_[^\/]*$/; next } /^\+/ && !skip' \
+     | LC_ALL=C sed -E 's/([a-z0-9])([A-Z])/\1 \2/g; s/([A-Z])([A-Z][a-z])/\1 \2/g' \
+     | tr 'A-Z_-' 'a-z  ' \
+     | sed -E 's/token +(count|usage|budget|limit)s?//g' \
+     | grep -qwE 'rate ?limit[a-z]*|throttl[a-z]*|quotas?|auth[nz]?|authenticat[a-z]*|authori[sz][a-z]*|token|passwords?|passwd|secrets?|credentials?|saniti[sz][a-z]*|escap[a-z]*|validat[a-z]*|permissions?|csrf|xsrf|cors|rls|polic(y|ies)|guards?|middlewares?|(allow|deny|white|black) ?lists?|hash(es|ed|ing)?|hmac|signatures?|nonces?|jwt|bearer|oauth[0-9]*|x forwarded for' \
+     && echo DEFENCE
+
+   # How big is it? (lines added + removed)
+   git diff main...HEAD --numstat | awk '{ n += $1 + $2 } END { print n + 0 }'
+
    # Does it render?
    git diff main...HEAD --name-only \
      | grep -qE '\.(html|css|scss|sass|less|tsx|jsx|vue|svelte|astro)$' && echo RENDERS
-
-   # Is it a defence?
-   git diff main...HEAD -U0 \
-     | grep -qiE 'rate.?limit|throttl|quota|auth[nz]?|token|password|secret|credential|sanitiz|escap|validat|permission|authoriz|csrf|cors|\brls\b|policy|guard|middleware|allow.?list|deny.?list|hash|hmac|signature|nonce|x-forwarded-for' \
-     && echo DEFENCE
    ```
 
    **`DEFENCE` makes `--deep` and step 6 mandatory, not advisory.** The same reasoning
@@ -66,11 +74,14 @@ the failures that a "looks good to me" read never will.
    specs; an independently built list of 25 bypass attempts walked through **16** of
    them, including simply omitting a header.
 
-   The grep over-fires — a diff that merely renames a variable called `token` prints
-   `DEFENCE`. That is the intended direction of the error. Over-firing costs one
-   round; under-firing ships an unattacked guard.
+   The grep still over-fires — renaming a variable called `token` prints `DEFENCE`.
+   That is the intended direction of the error: over-firing costs one round,
+   under-firing ships an unattacked guard. What it no longer does is fire on noise
+   that can never be a guard: file paths and hunk headers, removed lines, `author`,
+   LLM token counts, and changes that only touch tests or docs.
 
-3. Invoke the subagents **in parallel** (multiple Agent calls in one message):
+3. Invoke the subagents **in parallel** (multiple Agent calls in one message) — unless
+   the inline path below applies:
    - `code-simplifier` — redundancy, over-abstraction, naming
    - `test-writer` — missing test coverage
    - `security-auditor` — OWASP perspective
@@ -86,6 +97,20 @@ the failures that a "looks good to me" read never will.
    a result. Carry `UNVERIFIED: rendered behaviour not checked (<reason>)` into the
    verdict in step 7. A render check that vanishes quietly is an unmeasured thing
    counted as a pass.
+
+   **Give each agent the diff, not the repo.** Paste the `git diff main...HEAD` output
+   into its prompt and tell it to review that diff without re-running `git diff`,
+   opening a file only to confirm a specific finding (`test-writer` may also grep for
+   the existing tests of the changed code). A reviewer that re-reads the codebase
+   spends most of its budget on code nobody changed.
+
+   **Small and harmless → review inline instead.** If neither `DEFENCE` nor `RENDERS`
+   printed **and** the size is **≤ 50 lines**, skip the subagents and make their three
+   passes yourself, in one read of the diff: simplification (reuse, redundancy,
+   nesting, naming), tests (does every changed behaviour have one?), security (input
+   handling, access control, injection, secrets). If that read turns up a guard or a
+   rendered surface the grep missed, stop and take the subagent path (and `--deep` for
+   a guard) — the inline path is only for diffs with nothing to attack.
 
    Expect some to come back with a progress note rather than a report — "now let me
    check X" — instead of findings. That is a non-answer, not a clean result. Send it
@@ -163,11 +188,13 @@ The heavyweight version: **keep running rounds until there are zero findings.**
 
 - Round 0: `git diff main...HEAD --stat`, confirm the affected files and scale, and
   settle once whether this change renders **and whether it is a defence** — by running
-  the same two checks the default mode runs, not by recalling the answer. Both flags
+  the default mode's `DEFENCE` and `RENDERS` checks, not by recalling the answer. Both flags
   carry across every round and neither ages out.
 - Rounds 1–N: invoke `code-simplifier`, `test-writer`, `security-auditor` in parallel,
   plus `e2e-tester` **in every round once Round 0's `RENDERS` check fired** — the same
-  observable trigger as the default mode, not a fresh judgement call each round. Fix
+  observable trigger as the default mode, not a fresh judgement call each round. Give
+  every agent the round's current diff, as in the default mode — it changed when the
+  last round's fixes landed. Fix
   **Critical** and **Medium** findings immediately, then start the next round. Record
   **Minor** findings.
 - An `UNVERIFIED` render line carries across every round and does not age out. It is
