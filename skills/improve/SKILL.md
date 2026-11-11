@@ -49,10 +49,11 @@ the failures that a "looks good to me" read never will.
 2. **Ask the diff three questions. Run them — don't decide from what the work felt like:**
 
    ```sh
-   # Is it a defence? Added lines only, tests and docs skipped, whole words
-   # (camelCase and snake_case are split first, so requireAuth still counts).
+   # Is it a defence? Added and removed lines (deleting a guard counts), tests and
+   # docs skipped, file headers skipped, whole words (camelCase and snake_case are
+   # split first, so requireAuth still counts).
    git diff main...HEAD -U0 \
-     | awk '/^\+\+\+ / { f = substr($0, 5); skip = f ~ /(^|\/)(docs?|tests?|__tests__|e2e|fixtures?)\// || f ~ /\.(md|mdx|txt|rst)$/ || f ~ /([._]test|[._]spec)\.[^\/]*$/ || f ~ /\/test_[^\/]*$/; next } /^\+/ && !skip' \
+     | awk '/^diff --git / { f = $NF; hdr = 1; skip = f ~ /(^|\/)(docs?|tests?|__tests__|e2e|fixtures?)\// || f ~ /\.(md|mdx|txt|rst)$/ || f ~ /([._]test|[._]spec)\.[^\/]*$/ || f ~ /\/test_[^\/]*$/; next } /^@@/ { hdr = 0; next } !hdr && !skip && /^[+-]/' \
      | LC_ALL=C sed -E 's/([a-z0-9])([A-Z])/\1 \2/g; s/([A-Z])([A-Z][a-z])/\1 \2/g' \
      | tr 'A-Z_-' 'a-z  ' \
      | sed -E 's/token +(count|usage|budget|limit)s?//g' \
@@ -77,8 +78,10 @@ the failures that a "looks good to me" read never will.
    The grep still over-fires — renaming a variable called `token` prints `DEFENCE`.
    That is the intended direction of the error: over-firing costs one round,
    under-firing ships an unattacked guard. What it no longer does is fire on noise
-   that can never be a guard: file paths and hunk headers, removed lines, `author`,
-   LLM token counts, and changes that only touch tests or docs.
+   that can never be a guard: file paths and hunk headers, `author`, LLM token
+   counts, and changes that only touch tests or docs. Removed lines still count —
+   a diff that only deletes `requireAuth(req)` is the most dangerous change a
+   defence can get.
 
 3. Invoke the subagents **in parallel** (multiple Agent calls in one message) — unless
    the inline path below applies:

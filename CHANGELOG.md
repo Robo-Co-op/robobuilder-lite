@@ -2,6 +2,16 @@
 
 All notable changes to robobuilder-lite.
 
+## [1.5.1] — 2026-11-11
+
+### Fixed
+- **`DEFENCE` fires again when a diff only deletes a guard.** 1.5.0 matched added lines
+  only, so removing `requireAuth(req)` or an RLS policy, the most dangerous change a
+  defence can get, printed nothing. It now matches added and removed lines and still
+  skips file headers, test files and docs. The false hits 1.5.0 removed came from
+  headers, not removed lines, so the savings stay. `test_defence_trigger.py` gains
+  deleted-guard and deleted-test-file cases.
+
 ## [1.5.0] — 2026-11-11
 
 `improve` was burning tokens on reviews that had nothing to find. The main cause was
