@@ -2,6 +2,15 @@
 
 All notable changes to robobuilder-lite.
 
+## [1.4.1] — 2026-11-11
+
+### Changed
+- **`ship` now stops when a deploy needs a secret on a server.** It points to the
+  platform secret store or Standard's `/robobuilder:secret-transfer` (encrypted end to end),
+  and names the paths that leak: pasting into chat, printing to "check", and CI
+  artifacts (base64 is not encryption). Matches Robo Builder OS hard rule
+  `no-plaintext-secret-transit`.
+
 ## [1.4.0] — 2026-09-08
 
 A rate limiter went through this bundle's own cycle and came out with a green unit
