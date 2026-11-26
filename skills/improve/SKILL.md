@@ -41,6 +41,18 @@ in parallel — simplification, tests, security — surfaces more in one pass th
 single reviewer, and the adversarial mindset (assume it's broken, prove it) catches
 the failures that a "looks good to me" read never will.
 
+## Required reviewer unavailable
+
+If the active host/project policy forbids the required reviewer tools, do not
+invoke them indirectly or claim this review ran. Stop with `needs_human_review`
+and a **PENDING** verdict. Prepare the exact diff and test/blocker evidence for
+an independent human. A project-authorized draft PR may carry that review request
+when publication is separately authorized and its own test/policy gates pass;
+creating the PR does not complete improve or authorize merge/deploy. Keep any
+blocked gate visible. Do not manufacture a SHIP report or relocate protected
+state to obtain a pass. On Codex, Pro's documented handoff-only route can format
+this artifact without executing a review or starting a loop.
+
 ## How
 
 ### Default — daily diff review

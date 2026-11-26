@@ -9,6 +9,9 @@ on:
     branches: ['**']
   pull_request:
 
+permissions:
+  contents: read
+
 # Push runs on every branch so a branch is tested before it has a PR. A PR from a
 # branch in this repo was then tested twice (push + pull_request), doubling the
 # org's Actions minutes. The pull_request run now only happens for forks, which
