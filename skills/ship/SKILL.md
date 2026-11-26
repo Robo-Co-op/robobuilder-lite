@@ -98,7 +98,13 @@ prepare a local handoff instead.
 3. **Health / canary check** — hit the production URL, check for console errors,
    failed requests, and obvious performance regressions. Report the result.
 
-### Stops for
+**Secrets.** If the deploy needs a new or rotated API key, token or password on a server,
+**stop** and deliver it through the platform's secret store, or with Robo Builder Standard's
+`/robobuilder:secret-transfer` (encrypted end to end). Never ask anyone to paste a secret into
+chat, never print one to "check it arrived" (check the variable **name** instead), and never
+upload one as a CI artifact. Base64 is not encryption. If you're unsure, ask your lead.
+
+### Stops only for
 
 - On the base branch (abort)
 - Unresolvable merge conflicts
@@ -108,6 +114,7 @@ prepare a local handoff instead.
 - Missing authorization for push / PR / merge / deploy
 - Missing, pending, failed or stale PR-head CI / independent review / required approval
 - CI failure after merge
+- A new or rotated secret has to reach a server (see **Secrets** under Stage 4)
 
 ### Never stops for
 
@@ -148,6 +155,8 @@ accumulates.**
   in-branch — stop and look.
 - **A second ship run creating a duplicate PR.** Re-runs update the existing PR;
   they don't create a new one.
+- **Moving a secret through chat or a CI artifact "just this once".** That copy never
+  gets rotated or deleted. Use the secret store or `/robobuilder:secret-transfer`.
 
 ## See Also
 
